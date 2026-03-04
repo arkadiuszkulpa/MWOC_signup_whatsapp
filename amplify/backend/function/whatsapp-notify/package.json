@@ -1,0 +1,11 @@
+{
+  "name": "mwoc-whatsapp-notify",
+  "version": "1.0.0",
+  "description": "Send WhatsApp group invite links to new participants via SNS or WhatsApp Business API",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.400.0",
+    "@aws-sdk/client-dynamodb": "^3.400.0",
+    "@aws-sdk/lib-dynamodb": "^3.400.0"
+  }
+}

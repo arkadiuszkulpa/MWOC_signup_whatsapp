@@ -1,0 +1,169 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  MWOC Signup — Men's Way of the Cross participant management.
+  Deploys DynamoDB, Lambda functions, and API Gateway.
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs18.x
+    MemorySize: 256
+    Environment:
+      Variables:
+        PARTICIPANTS_TABLE: !Ref ParticipantsTable
+        WHATSAPP_GROUP_LINK: !Ref WhatsAppGroupLink
+
+Parameters:
+  WhatsAppGroupLink:
+    Type: String
+    Default: "https://chat.whatsapp.com/YOUR_GROUP_LINK"
+    Description: WhatsApp group invite link
+
+  MailchimpApiKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+
+  MailchimpServerPrefix:
+    Type: String
+    Default: "us21"
+
+  MailchimpListId:
+    Type: String
+    Default: ""
+
+  WhatsAppMode:
+    Type: String
+    Default: "sns"
+    AllowedValues: [sns, business, twilio]
+
+Resources:
+  # ---- DynamoDB ----
+  ParticipantsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: mwoc-participants
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: participantId
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+        - AttributeName: phone
+          AttributeType: S
+      KeySchema:
+        - AttributeName: participantId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: email-index
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: phone-index
+          KeySchema:
+            - AttributeName: phone
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # ---- Participants Lambda ----
+  ParticipantsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: amplify/backend/function/participants/
+      Handler: index.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ParticipantsTable
+      Events:
+        SearchPost:
+          Type: Api
+          Properties:
+            Path: /participants/search
+            Method: post
+            RestApiId: !Ref MWOCApi
+        ParticipantsGet:
+          Type: Api
+          Properties:
+            Path: /participants
+            Method: get
+            RestApiId: !Ref MWOCApi
+        ParticipantsPost:
+          Type: Api
+          Properties:
+            Path: /participants
+            Method: post
+            RestApiId: !Ref MWOCApi
+        ImportPost:
+          Type: Api
+          Properties:
+            Path: /participants/import
+            Method: post
+            RestApiId: !Ref MWOCApi
+
+  # ---- WhatsApp Notify Lambda ----
+  WhatsAppNotifyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: amplify/backend/function/whatsapp-notify/
+      Handler: index.handler
+      Environment:
+        Variables:
+          WHATSAPP_MODE: !Ref WhatsAppMode
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ParticipantsTable
+        - SNSPublishMessagePolicy:
+            TopicArn: "*"
+      Events:
+        NotifyPost:
+          Type: Api
+          Properties:
+            Path: /notify
+            Method: post
+            RestApiId: !Ref MWOCApi
+
+  # ---- Mailchimp Sync Lambda ----
+  MailchimpSyncFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: amplify/backend/function/mailchimp-sync/
+      Handler: index.handler
+      Timeout: 120
+      Environment:
+        Variables:
+          MAILCHIMP_API_KEY: !Ref MailchimpApiKey
+          MAILCHIMP_SERVER_PREFIX: !Ref MailchimpServerPrefix
+          MAILCHIMP_LIST_ID: !Ref MailchimpListId
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ParticipantsTable
+      Events:
+        # Run nightly at 2 AM UTC
+        NightlySync:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 2 * * ? *)
+            Description: Nightly Mailchimp <-> DynamoDB sync
+
+  # ---- API Gateway ----
+  MWOCApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,OPTIONS'"
+        AllowHeaders: "'Content-Type'"
+        AllowOrigin: "'*'"
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${MWOCApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+
+  ParticipantsTableName:
+    Description: DynamoDB table name
+    Value: !Ref ParticipantsTable

@@ -1,0 +1,65 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "API Gateway REST API for MWOC participant management",
+  "Parameters": {
+    "ParticipantsLambdaArn": {
+      "Type": "String",
+      "Description": "ARN of the participants Lambda function"
+    },
+    "WhatsAppNotifyLambdaArn": {
+      "Type": "String",
+      "Description": "ARN of the WhatsApp notify Lambda function"
+    }
+  },
+  "Resources": {
+    "MWOCApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "mwoc-api",
+        "Description": "MWOC Participant Signup API",
+        "EndpointConfiguration": {
+          "Types": ["REGIONAL"]
+        }
+      }
+    },
+    "ParticipantsResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": { "Fn::GetAtt": ["MWOCApi", "RootResourceId"] },
+        "PathPart": "participants",
+        "RestApiId": { "Ref": "MWOCApi" }
+      }
+    },
+    "ParticipantsSearchResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": { "Ref": "ParticipantsResource" },
+        "PathPart": "search",
+        "RestApiId": { "Ref": "MWOCApi" }
+      }
+    },
+    "ParticipantsImportResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": { "Ref": "ParticipantsResource" },
+        "PathPart": "import",
+        "RestApiId": { "Ref": "MWOCApi" }
+      }
+    },
+    "NotifyResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": { "Fn::GetAtt": ["MWOCApi", "RootResourceId"] },
+        "PathPart": "notify",
+        "RestApiId": { "Ref": "MWOCApi" }
+      }
+    }
+  },
+  "Outputs": {
+    "ApiUrl": {
+      "Value": {
+        "Fn::Sub": "https://${MWOCApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+      }
+    }
+  }
+}

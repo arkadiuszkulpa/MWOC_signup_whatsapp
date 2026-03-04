@@ -1,0 +1,11 @@
+{
+  "name": "mwoc-mailchimp-sync",
+  "version": "1.0.0",
+  "description": "Sync MWOC participants with Mailchimp mailing list",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.400.0",
+    "@aws-sdk/lib-dynamodb": "^3.400.0",
+    "@mailchimp/mailchimp_marketing": "^3.0.80"
+  }
+}
