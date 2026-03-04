@@ -1,0 +1,16 @@
+{
+  "name": "mwoc-signup-whatsapp",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "sandbox": "npx ampx sandbox",
+    "sandbox:delete": "npx ampx sandbox delete"
+  },
+  "devDependencies": {
+    "@aws-amplify/backend": "^1",
+    "@aws-amplify/backend-cli": "^1",
+    "aws-cdk-lib": "^2",
+    "constructs": "^10",
+    "typescript": "^5"
+  }
+}
