@@ -5,3 +5,10 @@ build/
 dist/
 .DS_Store
 *.log
+
+# Amplify Gen 2
+.amplify/
+amplify_outputs.json
+amplify_outputs.dart
+amplifyconfiguration.json
+amplifyconfiguration.dart
