@@ -23,16 +23,23 @@ export async function searchParticipant(query) {
   });
 }
 
-export async function createParticipant({ name, email, phone }) {
+export async function createParticipant({ name, email, phone, postcode, emergencyName, emergencyPhone }) {
   return request("/participants", {
     method: "POST",
-    body: JSON.stringify({ name, email, phone }),
+    body: JSON.stringify({ name, email, phone, postcode, emergencyName, emergencyPhone }),
   });
 }
 
-export async function sendWhatsAppInvite(participant) {
-  return request("/notify", {
+export async function checkinParticipant(participantId) {
+  return request("/participants/checkin", {
     method: "POST",
-    body: JSON.stringify(participant),
+    body: JSON.stringify({ participantId }),
+  });
+}
+
+export async function updateParticipant({ participantId, email, phone, postcode, emergencyName, emergencyPhone }) {
+  return request("/participants", {
+    method: "PUT",
+    body: JSON.stringify({ participantId, email, phone, postcode, emergencyName, emergencyPhone }),
   });
 }
