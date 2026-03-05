@@ -2,12 +2,21 @@ import React, { useState, useCallback } from "react";
 import SearchForm from "./components/SearchForm";
 import SearchResults from "./components/SearchResults";
 import SignupForm from "./components/SignupForm";
+import UpdateDetailsForm from "./components/UpdateDetailsForm";
+import DisclaimerScreen from "./components/DisclaimerScreen";
 import SuccessScreen from "./components/SuccessScreen";
-import { searchParticipant, createParticipant, sendWhatsAppInvite } from "./services/api";
+import { searchParticipant, createParticipant, updateParticipant, checkinParticipant } from "./services/api";
 import "./styles/App.css";
 
-// App states: search → results → signup → success
-const VIEWS = { SEARCH: "search", RESULTS: "results", SIGNUP: "signup", SUCCESS: "success" };
+// App states: search → results → signup/update → disclaimer → success
+const VIEWS = {
+  SEARCH: "search",
+  RESULTS: "results",
+  SIGNUP: "signup",
+  UPDATE: "update",
+  DISCLAIMER: "disclaimer",
+  SUCCESS: "success",
+};
 
 export default function App() {
   const [view, setView] = useState(VIEWS.SEARCH);
@@ -15,7 +24,6 @@ export default function App() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [whatsappGroupLink, setWhatsappGroupLink] = useState("");
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [isNewSignup, setIsNewSignup] = useState(false);
 
@@ -26,13 +34,11 @@ export default function App() {
 
     try {
       const { data } = await searchParticipant(query);
-      setWhatsappGroupLink(data.whatsappGroupLink || "");
 
       if (data.found && data.participants.length > 0) {
         setSearchResults(data.participants);
         setView(VIEWS.RESULTS);
       } else {
-        // No match — go straight to signup with query pre-filled
         setView(VIEWS.SIGNUP);
       }
     } catch (err) {
@@ -45,7 +51,33 @@ export default function App() {
   const handleSelectParticipant = (participant) => {
     setSelectedParticipant(participant);
     setIsNewSignup(false);
-    setView(VIEWS.SUCCESS);
+    // If missing email, phone, postcode, or emergency contact, prompt them to fill in details
+    if (!participant.email || !participant.phone || !participant.postcode || !participant.emergencyName) {
+      setView(VIEWS.UPDATE);
+    } else {
+      setView(VIEWS.DISCLAIMER);
+    }
+  };
+
+  const handleUpdate = async ({ participantId, email, phone, postcode, emergencyName, emergencyPhone }) => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const { data } = await updateParticipant({ participantId, email, phone, postcode, emergencyName, emergencyPhone });
+      setSelectedParticipant(data.participant);
+      setIsNewSignup(false);
+      setView(VIEWS.DISCLAIMER);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkipUpdate = () => {
+    setIsNewSignup(false);
+    setView(VIEWS.DISCLAIMER);
   };
 
   const handleSignup = async ({ name, email, phone }) => {
@@ -56,21 +88,27 @@ export default function App() {
       const { status, data } = await createParticipant({ name, email, phone });
 
       if (status === 409) {
-        // Already exists — show them as returning
         setSelectedParticipant(data.participant);
         setIsNewSignup(false);
       } else {
         setSelectedParticipant(data.participant);
         setIsNewSignup(true);
-
-        // Send WhatsApp invite in the background
-        if (data.participant.phone || data.participant.email) {
-          sendWhatsAppInvite(data.participant).catch((err) =>
-            console.warn("Failed to send WhatsApp invite:", err)
-          );
-        }
       }
-      setWhatsappGroupLink(data.whatsappGroupLink || whatsappGroupLink);
+      setView(VIEWS.DISCLAIMER);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptDisclaimer = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const { data } = await checkinParticipant(selectedParticipant.participantId);
+      setSelectedParticipant(data.participant);
       setView(VIEWS.SUCCESS);
     } catch (err) {
       setError(err.message);
@@ -107,7 +145,6 @@ export default function App() {
           <SearchResults
             participants={searchResults}
             onSelect={handleSelectParticipant}
-            whatsappGroupLink={whatsappGroupLink}
           />
           <button className="btn btn-secondary" onClick={() => setView(VIEWS.SIGNUP)}>
             I'm not in the list — Sign me up
@@ -124,11 +161,27 @@ export default function App() {
         />
       )}
 
+      {view === VIEWS.UPDATE && selectedParticipant && (
+        <UpdateDetailsForm
+          participant={selectedParticipant}
+          onUpdate={handleUpdate}
+          onSkip={handleSkipUpdate}
+          loading={loading}
+        />
+      )}
+
+      {view === VIEWS.DISCLAIMER && selectedParticipant && (
+        <DisclaimerScreen
+          participant={selectedParticipant}
+          onAccept={handleAcceptDisclaimer}
+          loading={loading}
+        />
+      )}
+
       {view === VIEWS.SUCCESS && selectedParticipant && (
         <SuccessScreen
           participant={selectedParticipant}
           isNew={isNewSignup}
-          whatsappGroupLink={whatsappGroupLink}
           onReset={handleReset}
         />
       )}

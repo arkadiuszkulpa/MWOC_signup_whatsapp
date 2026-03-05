@@ -4,6 +4,9 @@ export default function SignupForm({ initialQuery, onSignup, loading, onCancel }
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [postcode, setPostcode] = useState("");
+  const [emergencyName, setEmergencyName] = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
   const nameRef = useRef(null);
 
   useEffect(() => {
@@ -24,7 +27,14 @@ export default function SignupForm({ initialQuery, onSignup, loading, onCancel }
     e.preventDefault();
     if (!name.trim()) return;
     if (!email.trim() && !phone.trim()) return;
-    onSignup({ name: name.trim(), email: email.trim(), phone: phone.trim() });
+    onSignup({
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      postcode: postcode.trim().toUpperCase(),
+      emergencyName: emergencyName.trim(),
+      emergencyPhone: emergencyPhone.trim(),
+    });
   };
 
   const isValid = name.trim().length > 0 && (email.trim().length > 0 || phone.trim().length > 0);
@@ -64,12 +74,55 @@ export default function SignupForm({ initialQuery, onSignup, loading, onCancel }
           <input
             id="phone"
             type="tel"
-            placeholder="+353 87 123 4567"
+            placeholder="+44 7700 900000"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             autoComplete="off"
           />
         </div>
+        <div className="input-group">
+          <label htmlFor="postcode">Postcode Area (first half)</label>
+          <input
+            id="postcode"
+            type="text"
+            placeholder="e.g. BN1, TN34, RH10"
+            value={postcode}
+            onChange={(e) => setPostcode(e.target.value)}
+            autoComplete="off"
+            maxLength={5}
+            style={{ textTransform: "uppercase" }}
+          />
+          <span style={{ color: "#606080", fontSize: 12 }}>
+            Used for our event map — no full address needed
+          </span>
+        </div>
+
+        <p style={{ color: "#e0a526", fontSize: 14, marginTop: 20, marginBottom: 8, fontWeight: "bold" }}>
+          Emergency Contact / Next of Kin
+        </p>
+        <div className="input-group">
+          <label htmlFor="emergencyName">Contact Name</label>
+          <input
+            id="emergencyName"
+            type="text"
+            placeholder="Jane Smith"
+            value={emergencyName}
+            onChange={(e) => setEmergencyName(e.target.value)}
+            autoComplete="off"
+          />
+        </div>
+        <div className="input-group">
+          <label htmlFor="emergencyPhone">Contact Phone</label>
+          <input
+            id="emergencyPhone"
+            type="tel"
+            placeholder="+44 7700 900000"
+            value={emergencyPhone}
+            onChange={(e) => setEmergencyPhone(e.target.value)}
+            autoComplete="off"
+          />
+        </div>
+
         <p style={{ color: "#606080", fontSize: 13, marginBottom: 16 }}>
           * Name is required, plus at least one of email or phone.
         </p>

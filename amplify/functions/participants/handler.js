@@ -1,19 +1,17 @@
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const {
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
   DynamoDBDocumentClient,
   PutCommand,
   QueryCommand,
   ScanCommand,
   UpdateCommand,
-} = require("@aws-sdk/lib-dynamodb");
-const { v4: uuidv4 } = require("uuid");
+} from "@aws-sdk/lib-dynamodb";
+import { v4 as uuidv4 } from "uuid";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
 const TABLE_NAME = process.env.PARTICIPANTS_TABLE || "mwoc-participants";
-const WHATSAPP_GROUP_LINK =
-  process.env.WHATSAPP_GROUP_LINK || "https://chat.whatsapp.com/YOUR_GROUP_LINK";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +20,7 @@ const headers = {
   "Content-Type": "application/json",
 };
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   console.log("Event:", JSON.stringify(event, null, 2));
 
   if (event.httpMethod === "OPTIONS") {
@@ -38,6 +36,12 @@ exports.handler = async (event) => {
     }
     if (path === "/participants" && method === "POST") {
       return await createParticipant(JSON.parse(event.body));
+    }
+    if (path === "/participants/checkin" && method === "POST") {
+      return await checkinParticipant(JSON.parse(event.body));
+    }
+    if (path === "/participants" && method === "PUT") {
+      return await updateParticipant(JSON.parse(event.body));
     }
     if (path === "/participants" && method === "GET") {
       return await listParticipants();
@@ -109,14 +113,13 @@ async function searchParticipant({ query }) {
   return response(200, {
     found: unique.length > 0,
     participants: unique,
-    whatsappGroupLink: WHATSAPP_GROUP_LINK,
   });
 }
 
 // ---------------------------------------------------------------------------
 // Create a new participant — called when someone signs up on the tablet
 // ---------------------------------------------------------------------------
-async function createParticipant({ name, email, phone }) {
+async function createParticipant({ name, email, phone, postcode, emergencyName, emergencyPhone }) {
   if (!name || (!email && !phone)) {
     return response(400, {
       error: "Name is required, plus at least one of email or phone",
@@ -168,9 +171,11 @@ async function createParticipant({ name, email, phone }) {
     lowerName: name.trim().toLowerCase(),
     email: normalizedEmail,
     phone: normalizedPhone,
-    inWhatsAppGroup: false,
-    inMailchimp: false,
+    postcode: postcode ? postcode.trim().toUpperCase() : undefined,
+    emergencyName: emergencyName ? emergencyName.trim() : undefined,
+    emergencyPhone: emergencyPhone ? emergencyPhone.replace(/\D/g, "") : undefined,
     source: "tablet-signup",
+    lastCheckedIn: now,
     createdAt: now,
     updatedAt: now,
   };
@@ -181,8 +186,116 @@ async function createParticipant({ name, email, phone }) {
 
   return response(201, {
     participant,
-    whatsappGroupLink: WHATSAPP_GROUP_LINK,
     message: "Participant registered successfully",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Check in a participant — records lastCheckedIn timestamp
+// ---------------------------------------------------------------------------
+async function checkinParticipant({ participantId }) {
+  if (!participantId) {
+    return response(400, { error: "participantId is required" });
+  }
+
+  const now = new Date().toISOString();
+  const result = await docClient.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { participantId },
+      UpdateExpression: "SET lastCheckedIn = :now, updatedAt = :now",
+      ExpressionAttributeValues: { ":now": now },
+      ReturnValues: "ALL_NEW",
+    })
+  );
+
+  return response(200, {
+    participant: result.Attributes,
+    message: "Checked in successfully",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Update an existing participant — fill in missing details (email/phone)
+// ---------------------------------------------------------------------------
+async function updateParticipant({ participantId, email, phone, postcode, emergencyName, emergencyPhone }) {
+  if (!participantId) {
+    return response(400, { error: "participantId is required" });
+  }
+
+  const updates = [];
+  const values = {};
+  const now = new Date().toISOString();
+
+  if (email) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        IndexName: "email-index",
+        KeyConditionExpression: "email = :email",
+        ExpressionAttributeValues: { ":email": normalizedEmail },
+      })
+    );
+    if (existing.Items && existing.Items.length > 0 && existing.Items[0].participantId !== participantId) {
+      return response(409, { error: "This email is already used by another participant" });
+    }
+    updates.push("email = :email");
+    values[":email"] = normalizedEmail;
+  }
+
+  if (phone) {
+    const normalizedPhone = phone.replace(/\D/g, "");
+    const existing = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        IndexName: "phone-index",
+        KeyConditionExpression: "phone = :phone",
+        ExpressionAttributeValues: { ":phone": normalizedPhone },
+      })
+    );
+    if (existing.Items && existing.Items.length > 0 && existing.Items[0].participantId !== participantId) {
+      return response(409, { error: "This phone is already used by another participant" });
+    }
+    updates.push("phone = :phone");
+    values[":phone"] = normalizedPhone;
+  }
+
+  if (postcode) {
+    updates.push("postcode = :postcode");
+    values[":postcode"] = postcode.trim().toUpperCase();
+  }
+
+  if (emergencyName) {
+    updates.push("emergencyName = :eName");
+    values[":eName"] = emergencyName.trim();
+  }
+
+  if (emergencyPhone) {
+    updates.push("emergencyPhone = :ePhone");
+    values[":ePhone"] = emergencyPhone.replace(/\D/g, "");
+  }
+
+  if (updates.length === 0) {
+    return response(400, { error: "Nothing to update" });
+  }
+
+  updates.push("updatedAt = :now");
+  values[":now"] = now;
+
+  const result = await docClient.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { participantId },
+      UpdateExpression: `SET ${updates.join(", ")}`,
+      ExpressionAttributeValues: values,
+      ReturnValues: "ALL_NEW",
+    })
+  );
+
+  return response(200, {
+    participant: result.Attributes,
+    message: "Participant updated successfully",
   });
 }
 
@@ -200,7 +313,7 @@ async function listParticipants() {
 }
 
 // ---------------------------------------------------------------------------
-// Bulk import — for seeding from Mailchimp export or WhatsApp contacts
+// Bulk import — for seeding from CSV/contacts
 // ---------------------------------------------------------------------------
 async function bulkImport({ participants, source }) {
   if (!Array.isArray(participants)) {
@@ -226,15 +339,6 @@ async function bulkImport({ participants, source }) {
           })
         );
         if (existing.Items && existing.Items.length > 0) {
-          // Update source flags on existing record
-          await docClient.send(
-            new UpdateCommand({
-              TableName: TABLE_NAME,
-              Key: { participantId: existing.Items[0].participantId },
-              UpdateExpression: `SET ${source === "mailchimp" ? "inMailchimp" : "inWhatsAppGroup"} = :t, updatedAt = :now`,
-              ExpressionAttributeValues: { ":t": true, ":now": now },
-            })
-          );
           results.skipped++;
           continue;
         }
@@ -246,8 +350,6 @@ async function bulkImport({ participants, source }) {
         lowerName: (p.name || "unknown").trim().toLowerCase(),
         email: normalizedEmail,
         phone: normalizedPhone,
-        inWhatsAppGroup: source === "whatsapp",
-        inMailchimp: source === "mailchimp",
         source: source || "import",
         createdAt: now,
         updatedAt: now,

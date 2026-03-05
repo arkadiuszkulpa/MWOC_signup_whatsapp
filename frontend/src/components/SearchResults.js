@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function SearchResults({ participants, onSelect, whatsappGroupLink }) {
+export default function SearchResults({ participants, onSelect }) {
   if (!participants || participants.length === 0) return null;
 
   return (
@@ -14,16 +14,8 @@ export default function SearchResults({ participants, onSelect, whatsappGroupLin
           <li key={p.participantId} onClick={() => onSelect(p)}>
             <div className="name">{p.name}</div>
             <div className="details">
-              {p.email && <span>{p.email}</span>}
-              {p.phone && <span>{p.phone}</span>}
-            </div>
-            <div>
-              <span className={`status-badge ${p.inWhatsAppGroup ? "active" : "pending"}`}>
-                WhatsApp: {p.inWhatsAppGroup ? "Joined" : "Not yet"}
-              </span>
-              <span className={`status-badge ${p.inMailchimp ? "active" : "pending"}`}>
-                Mailing list: {p.inMailchimp ? "Yes" : "No"}
-              </span>
+              {p.email && <div>{p.email}</div>}
+              {p.phone && <div>{p.phone}</div>}
             </div>
           </li>
         ))}

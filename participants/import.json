@@ -1,0 +1,26 @@
+{
+  "participants": [
+    { "name": "Antoni Krezelok", "email": "krezelok@googlemail.com", "phone": "07445427689" },
+    { "name": "Neil Taylor", "email": "neil.taylor3012@gmail.com" },
+    { "name": "Morne Janse van Rensburg", "email": "jestie@gmail.com", "phone": "07544984604" },
+    { "name": "Stanislaw Mroz", "email": "staszekmroz73@gmail.com", "phone": "07946219966" },
+    { "name": "Steve Gallacher", "email": "stevie.gallacher@sky.com", "phone": "07837246298" },
+    { "name": "Rafal Druzbicki", "email": "druzbicki@gmail.com", "phone": "07540581756" },
+    { "name": "Marcin Maassen", "email": "mmaassen@wp.pl", "phone": "07792753823" },
+    { "name": "Patryk Ties", "email": "patrykties@gmail.com" },
+    { "name": "Przemyslaw Pietkun", "email": "przemyslaw.pietkun@gmail.com", "phone": "07742633589" },
+    { "name": "Robert Myers", "email": "rnmyerspiano@gmail.com", "phone": "07584624635" },
+    { "name": "Marcin Borowicz", "email": "mark.borov@yahoo.com", "phone": "07517636823" },
+    { "name": "Robert Dimaano", "email": "robert.dimaano@yahoo.com", "phone": "07588562365" },
+    { "name": "Marek Krejpowicz", "email": "marek.krejpowicz@gmail.com", "phone": "07762220613" },
+    { "name": "Mariusz Dominik", "email": "mariuszdominik7@gmail.com" },
+    { "name": "Pawel Wydra", "email": "pawkawydra@gmail.com", "phone": "07870152351" },
+    { "name": "Andrzej Skulski", "email": "skulski76@tlen.pl", "phone": "07743950834" },
+    { "name": "Cajetan Skowronski", "email": "cajetan.skowronski@hotmail.com", "phone": "07756254048" },
+    { "name": "Piotr Wydra", "email": "piotrpwydra@gmail.com", "phone": "07512308137" },
+    { "name": "Marcelo de Freitas", "email": "marcelo@advgroup.co.za", "phone": "07535899198" },
+    { "name": "Krzysztof Tarala", "email": "krzysztoftarala@wp.pl", "phone": "07821113187" },
+    { "name": "Patrick Bermingham", "email": "berminghamp@yahoo.co.uk", "phone": "01424729516" }
+  ],
+  "source": "mailchimp-import"
+}
