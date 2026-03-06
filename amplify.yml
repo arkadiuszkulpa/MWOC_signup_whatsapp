@@ -1,4 +1,10 @@
 version: 1
+backend:
+  phases:
+    build:
+      commands:
+        - npm ci
+        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
     preBuild:
@@ -6,11 +12,13 @@ frontend:
         - cd frontend && npm ci
     build:
       commands:
+        - export REACT_APP_API_URL=$(node -e "const o=require('./amplify_outputs.json');console.log(o.custom.apiUrl.replace(/\/$/,''))")
         - cd frontend && npm run build
   artifacts:
     baseDirectory: frontend/build
     files:
-      - "**/*"
+      - '**/*'
   cache:
     paths:
+      - node_modules/**/*
       - frontend/node_modules/**/*
