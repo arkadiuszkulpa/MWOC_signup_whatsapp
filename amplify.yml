@@ -12,6 +12,7 @@ frontend:
         - cd frontend && npm ci
     build:
       commands:
+        - npx ampx generate outputs --app-id $AWS_APP_ID --branch $AWS_BRANCH
         - export REACT_APP_API_URL=$(node -e "const o=require('./amplify_outputs.json');console.log(o.custom.apiUrl.replace(/\/$/,''))")
         - cd frontend && npm run build
   artifacts:
