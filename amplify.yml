@@ -9,17 +9,16 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd frontend && npm ci
+        - npm ci
     build:
       commands:
         - npx ampx generate outputs --app-id $AWS_APP_ID --branch $AWS_BRANCH
-        - export REACT_APP_API_URL=$(node -e "const o=require('./amplify_outputs.json');console.log(o.custom.apiUrl.replace(/\/$/,''))")
-        - cd frontend && npm run build
+        - export VITE_API_URL=$(node -e "const o=require('./amplify_outputs.json');console.log(o.custom.apiUrl.replace(/\/$/,''))")
+        - npm run build
   artifacts:
-    baseDirectory: frontend/build
+    baseDirectory: dist
     files:
       - '**/*'
   cache:
     paths:
       - node_modules/**/*
-      - frontend/node_modules/**/*

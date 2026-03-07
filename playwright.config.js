@@ -9,7 +9,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: {
-    command: "npm start",
+    command: "npm run dev",
     port: 3000,
     timeout: 30000,
     reuseExistingServer: true,
