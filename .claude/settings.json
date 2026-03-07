@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install -D @playwright/test)",
+      "Bash(npx playwright install chromium)",
+      "Bash(npx playwright test)",
+      "Bash(npm install)",
+      "WebFetch(domain:docs.amplify.aws)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
