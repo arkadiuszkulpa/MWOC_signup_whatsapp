@@ -22,10 +22,13 @@
   "devDependencies": {
     "@aws-amplify/backend": "^1",
     "@aws-amplify/backend-cli": "^1",
+    "@aws-sdk/eventstream-handler-node": "^3.821.0",
     "@playwright/test": "^1.58.2",
     "@vitejs/plugin-react": "^4.3.4",
     "aws-cdk-lib": "^2",
     "constructs": "^10",
+    "json-schema-to-ts": "^3.1.1",
+    "ts-algebra": "^2.0.0",
     "typescript": "^5",
     "vite": "^6.2.0"
   }
