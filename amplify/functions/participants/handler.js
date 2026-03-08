@@ -218,7 +218,7 @@ async function checkinParticipant({ participantId }) {
 // ---------------------------------------------------------------------------
 // Update an existing participant — fill in missing details (email/phone)
 // ---------------------------------------------------------------------------
-async function updateParticipant({ participantId, email, phone, postcode, emergencyName, emergencyPhone }) {
+async function updateParticipant({ participantId, name, email, phone, postcode, emergencyName, emergencyPhone }) {
   if (!participantId) {
     return response(400, { error: "participantId is required" });
   }
@@ -226,6 +226,12 @@ async function updateParticipant({ participantId, email, phone, postcode, emerge
   const updates = [];
   const values = {};
   const now = new Date().toISOString();
+
+  if (name) {
+    updates.push("#n = :name, lowerName = :lowerName");
+    values[":name"] = name.trim();
+    values[":lowerName"] = name.trim().toLowerCase();
+  }
 
   if (email) {
     const normalizedEmail = email.trim().toLowerCase();
@@ -283,15 +289,19 @@ async function updateParticipant({ participantId, email, phone, postcode, emerge
   updates.push("updatedAt = :now");
   values[":now"] = now;
 
-  const result = await docClient.send(
-    new UpdateCommand({
-      TableName: TABLE_NAME,
-      Key: { participantId },
-      UpdateExpression: `SET ${updates.join(", ")}`,
-      ExpressionAttributeValues: values,
-      ReturnValues: "ALL_NEW",
-    })
-  );
+  const updateParams = {
+    TableName: TABLE_NAME,
+    Key: { participantId },
+    UpdateExpression: `SET ${updates.join(", ")}`,
+    ExpressionAttributeValues: values,
+    ReturnValues: "ALL_NEW",
+  };
+
+  if (name) {
+    updateParams.ExpressionAttributeNames = { "#n": "name" };
+  }
+
+  const result = await docClient.send(new UpdateCommand(updateParams));
 
   return response(200, {
     participant: result.Attributes,
