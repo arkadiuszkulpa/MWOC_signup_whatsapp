@@ -37,9 +37,9 @@ export async function checkinParticipant(participantId) {
   });
 }
 
-export async function updateParticipant({ participantId, email, phone, postcode, emergencyName, emergencyPhone }) {
+export async function updateParticipant({ participantId, name, email, phone, postcode, emergencyName, emergencyPhone }) {
   return request("/participants", {
     method: "PUT",
-    body: JSON.stringify({ participantId, email, phone, postcode, emergencyName, emergencyPhone }),
+    body: JSON.stringify({ participantId, name, email, phone, postcode, emergencyName, emergencyPhone }),
   });
 }

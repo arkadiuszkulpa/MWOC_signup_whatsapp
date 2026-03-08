@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
+  GetCommand,
   PutCommand,
   QueryCommand,
   ScanCommand,
@@ -218,17 +219,37 @@ async function checkinParticipant({ participantId }) {
 // ---------------------------------------------------------------------------
 // Update an existing participant — fill in missing details (email/phone)
 // ---------------------------------------------------------------------------
-async function updateParticipant({ participantId, email, phone, postcode, emergencyName, emergencyPhone }) {
+async function updateParticipant({ participantId, name, email, phone, postcode, emergencyName, emergencyPhone }) {
   if (!participantId) {
     return response(400, { error: "participantId is required" });
+  }
+
+  // Fetch current record for audit trail
+  const current = await docClient.send(
+    new GetCommand({ TableName: TABLE_NAME, Key: { participantId } })
+  );
+  if (!current.Item) {
+    return response(404, { error: "Participant not found" });
   }
 
   const updates = [];
   const values = {};
   const now = new Date().toISOString();
 
+  // Track what changed for audit
+  const changedFields = {};
+
+  if (name) {
+    const trimmed = name.trim();
+    if (trimmed !== current.Item.name) changedFields.name = current.Item.name;
+    updates.push("#n = :name, lowerName = :lowerName");
+    values[":name"] = trimmed;
+    values[":lowerName"] = trimmed.toLowerCase();
+  }
+
   if (email) {
     const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail !== current.Item.email) changedFields.email = current.Item.email || null;
     const existing = await docClient.send(
       new QueryCommand({
         TableName: TABLE_NAME,
@@ -246,6 +267,7 @@ async function updateParticipant({ participantId, email, phone, postcode, emerge
 
   if (phone) {
     const normalizedPhone = phone.replace(/\D/g, "");
+    if (normalizedPhone !== current.Item.phone) changedFields.phone = current.Item.phone || null;
     const existing = await docClient.send(
       new QueryCommand({
         TableName: TABLE_NAME,
@@ -262,36 +284,55 @@ async function updateParticipant({ participantId, email, phone, postcode, emerge
   }
 
   if (postcode) {
+    const normalizedPostcode = postcode.trim().toUpperCase();
+    if (normalizedPostcode !== current.Item.postcode) changedFields.postcode = current.Item.postcode || null;
     updates.push("postcode = :postcode");
-    values[":postcode"] = postcode.trim().toUpperCase();
+    values[":postcode"] = normalizedPostcode;
   }
 
   if (emergencyName) {
+    const trimmed = emergencyName.trim();
+    if (trimmed !== current.Item.emergencyName) changedFields.emergencyName = current.Item.emergencyName || null;
     updates.push("emergencyName = :eName");
-    values[":eName"] = emergencyName.trim();
+    values[":eName"] = trimmed;
   }
 
   if (emergencyPhone) {
+    const normalized = emergencyPhone.replace(/\D/g, "");
+    if (normalized !== current.Item.emergencyPhone) changedFields.emergencyPhone = current.Item.emergencyPhone || null;
     updates.push("emergencyPhone = :ePhone");
-    values[":ePhone"] = emergencyPhone.replace(/\D/g, "");
+    values[":ePhone"] = normalized;
   }
 
   if (updates.length === 0) {
     return response(400, { error: "Nothing to update" });
   }
 
+  // Append audit entry if any fields actually changed
+  if (Object.keys(changedFields).length > 0) {
+    const auditEntry = { timestamp: now, previousValues: changedFields };
+    const history = current.Item.changeHistory || [];
+    history.push(auditEntry);
+    updates.push("changeHistory = :history");
+    values[":history"] = history;
+  }
+
   updates.push("updatedAt = :now");
   values[":now"] = now;
 
-  const result = await docClient.send(
-    new UpdateCommand({
-      TableName: TABLE_NAME,
-      Key: { participantId },
-      UpdateExpression: `SET ${updates.join(", ")}`,
-      ExpressionAttributeValues: values,
-      ReturnValues: "ALL_NEW",
-    })
-  );
+  const updateParams = {
+    TableName: TABLE_NAME,
+    Key: { participantId },
+    UpdateExpression: `SET ${updates.join(", ")}`,
+    ExpressionAttributeValues: values,
+    ReturnValues: "ALL_NEW",
+  };
+
+  if (name) {
+    updateParams.ExpressionAttributeNames = { "#n": "name" };
+  }
+
+  const result = await docClient.send(new UpdateCommand(updateParams));
 
   return response(200, {
     participant: result.Attributes,

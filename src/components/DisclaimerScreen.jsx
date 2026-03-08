@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function DisclaimerScreen({ participant, onAccept, loading }) {
+export default function DisclaimerScreen({ participant, onAccept, onEditAll, loading }) {
   return (
     <div className="search-section">
       <h2>Safety Disclaimer</h2>
@@ -44,6 +44,16 @@ export default function DisclaimerScreen({ participant, onAccept, loading }) {
           "I Accept — Check Me In"
         )}
       </button>
+      {onEditAll && (
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ marginTop: 8, fontSize: 13, opacity: 0.8 }}
+          onClick={onEditAll}
+        >
+          Edit my details
+        </button>
+      )}
     </div>
   );
 }

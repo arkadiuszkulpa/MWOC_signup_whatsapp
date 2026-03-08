@@ -14,6 +14,7 @@ const VIEWS = {
   RESULTS: "results",
   SIGNUP: "signup",
   UPDATE: "update",
+  EDIT_ALL: "editAll",
   DISCLAIMER: "disclaimer",
   SUCCESS: "success",
 };
@@ -166,7 +167,18 @@ export default function App() {
           participant={selectedParticipant}
           onUpdate={handleUpdate}
           onSkip={handleSkipUpdate}
+          onEditAll={() => setView(VIEWS.EDIT_ALL)}
           loading={loading}
+        />
+      )}
+
+      {view === VIEWS.EDIT_ALL && selectedParticipant && (
+        <UpdateDetailsForm
+          participant={selectedParticipant}
+          onUpdate={handleUpdate}
+          onSkip={() => setView(VIEWS.DISCLAIMER)}
+          loading={loading}
+          editAll
         />
       )}
 
@@ -174,6 +186,7 @@ export default function App() {
         <DisclaimerScreen
           participant={selectedParticipant}
           onAccept={handleAcceptDisclaimer}
+          onEditAll={() => setView(VIEWS.EDIT_ALL)}
           loading={loading}
         />
       )}
