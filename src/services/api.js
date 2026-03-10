@@ -43,3 +43,7 @@ export async function updateParticipant({ participantId, name, email, phone, pos
     body: JSON.stringify({ participantId, name, email, phone, postcode, emergencyName, emergencyPhone }),
   });
 }
+
+export async function getPostcodeCounts() {
+  return request("/participants/postcodes", { method: "GET" });
+}

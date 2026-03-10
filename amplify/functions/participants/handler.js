@@ -13,6 +13,13 @@ const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
 const TABLE_NAME = process.env.PARTICIPANTS_TABLE || "mwoc-participants";
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
+
+function isAdmin(event) {
+  if (!ADMIN_API_KEY) return false;
+  const provided = (event.headers || {})["x-api-key"] || (event.headers || {})["X-Api-Key"] || "";
+  return provided === ADMIN_API_KEY;
+}
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -44,10 +51,15 @@ export const handler = async (event) => {
     if (path === "/participants" && method === "PUT") {
       return await updateParticipant(JSON.parse(event.body));
     }
+    if (path === "/participants/postcodes" && method === "GET") {
+      return await getPostcodeCounts();
+    }
     if (path === "/participants" && method === "GET") {
+      if (!isAdmin(event)) return response(401, { error: "Unauthorized" });
       return await listParticipants();
     }
     if (path === "/participants/import" && method === "POST") {
+      if (!isAdmin(event)) return response(401, { error: "Unauthorized" });
       return await bulkImport(JSON.parse(event.body));
     }
 
@@ -338,6 +350,28 @@ async function updateParticipant({ participantId, name, email, phone, postcode, 
     participant: result.Attributes,
     message: "Participant updated successfully",
   });
+}
+
+// ---------------------------------------------------------------------------
+// Aggregated postcode counts — public, no PII
+// ---------------------------------------------------------------------------
+async function getPostcodeCounts() {
+  const result = await docClient.send(
+    new ScanCommand({
+      TableName: TABLE_NAME,
+      ProjectionExpression: "postcode",
+      FilterExpression: "attribute_exists(postcode) AND postcode <> :empty",
+      ExpressionAttributeValues: { ":empty": "" },
+    })
+  );
+
+  const counts = {};
+  for (const item of result.Items || []) {
+    const code = item.postcode.trim().toUpperCase();
+    if (code) counts[code] = (counts[code] || 0) + 1;
+  }
+
+  return response(200, { postcodes: counts, total: Object.values(counts).reduce((a, b) => a + b, 0) });
 }
 
 // ---------------------------------------------------------------------------

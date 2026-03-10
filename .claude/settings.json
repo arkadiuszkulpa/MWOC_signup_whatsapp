@@ -6,7 +6,11 @@
       "Bash(npx playwright test)",
       "Bash(npm install)",
       "WebFetch(domain:docs.amplify.aws)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npm install react-leaflet leaflet react-leaflet-cluster)",
+      "Bash(npm install react-leaflet@4.2.1 leaflet@1.9.4 react-leaflet-cluster@2.1.0)",
+      "Bash(node scripts/generatePostcodeData.js)",
+      "Bash(npm install leaflet.markercluster)"
     ]
   }
 }
