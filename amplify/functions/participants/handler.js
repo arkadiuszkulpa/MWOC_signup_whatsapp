@@ -399,8 +399,12 @@ async function getPostcodeCounts() {
 
   const counts = {};
   for (const item of result.Items || []) {
-    const code = item.postcode.trim().toUpperCase();
-    if (code) counts[code] = (counts[code] || 0) + 1;
+    const raw = item.postcode.trim().toUpperCase();
+    // Extract outward code: part before the space, or drop last 3 chars (UK format)
+    const outward = raw.includes(" ")
+      ? raw.split(" ")[0]
+      : raw.length > 3 ? raw.slice(0, -3) : raw;
+    if (outward) counts[outward] = (counts[outward] || 0) + 1;
   }
 
   return response(200, { postcodes: counts, total: Object.values(counts).reduce((a, b) => a + b, 0) });

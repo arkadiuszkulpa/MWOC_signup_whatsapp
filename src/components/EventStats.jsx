@@ -4,7 +4,7 @@ import { getEventStats } from "../services/api";
 // Change this to today's date (YYYY-MM-DD) to test event-day mode
 const EVENT_DATE = "2026-03-20";
 
-export default function EventStats() {
+export default function EventStats({ refreshKey }) {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function EventStats() {
         // Silently fail — stats are non-critical
       }
     })();
-  }, []);
+  }, [refreshKey]);
 
   if (!stats) return null;
 
