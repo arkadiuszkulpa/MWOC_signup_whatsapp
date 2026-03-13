@@ -69,6 +69,10 @@ participantsResource.addMethod("PUT", participantsIntegration);
 const postcodesResource = participantsResource.addResource("postcodes");
 postcodesResource.addMethod("GET", participantsIntegration);
 
+// /participants/stats  (public — returns check-in counts only, no PII)
+const statsResource = participantsResource.addResource("stats");
+statsResource.addMethod("GET", participantsIntegration);
+
 // /participants/search
 const searchResource = participantsResource.addResource("search");
 searchResource.addMethod("POST", participantsIntegration);

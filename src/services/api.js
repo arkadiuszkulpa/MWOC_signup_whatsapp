@@ -47,3 +47,7 @@ export async function updateParticipant({ participantId, name, email, phone, pos
 export async function getPostcodeCounts() {
   return request("/participants/postcodes", { method: "GET" });
 }
+
+export async function getEventStats() {
+  return request("/participants/stats", { method: "GET" });
+}

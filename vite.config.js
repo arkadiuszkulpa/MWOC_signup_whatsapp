@@ -7,4 +7,10 @@ export default defineConfig({
     port: 3000,
     open: true,
   },
+  optimizeDeps: {
+    include: ["maplibre-gl"],
+    esbuildOptions: {
+      target: "es2022",
+    },
+  },
 });

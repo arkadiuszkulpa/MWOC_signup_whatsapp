@@ -10,7 +10,8 @@
       "Bash(npm install react-leaflet leaflet react-leaflet-cluster)",
       "Bash(npm install react-leaflet@4.2.1 leaflet@1.9.4 react-leaflet-cluster@2.1.0)",
       "Bash(node scripts/generatePostcodeData.js)",
-      "Bash(npm install leaflet.markercluster)"
+      "Bash(npm install leaflet.markercluster)",
+      "Bash(npm uninstall react-leaflet react-leaflet-cluster leaflet leaflet.markercluster)"
     ]
   }
 }

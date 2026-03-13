@@ -46,6 +46,26 @@ body {
   color: #a0a0b0;
 }
 
+/* Event stats counter */
+.event-stats {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.event-stat {
+  font-size: 14px;
+  color: #a0a0b0;
+}
+
+.event-stat-number {
+  color: #e0a526;
+  font-weight: 700;
+  font-size: 18px;
+}
+
 /* Cross icon */
 .cross-icon {
   font-size: 48px;
@@ -412,55 +432,22 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.map-container .leaflet-container {
-  height: 100%;
-  width: 100%;
-  background: #1a1a2e;
-}
-
-/* Undo global reset inside Leaflet — tiles need default img/div styling */
-.leaflet-container * {
-  box-sizing: content-box;
-}
-
-.leaflet-container img {
-  max-width: none !important;
-}
-
-/* Leaflet cluster icon overrides for dark theme */
-.marker-cluster-small,
-.marker-cluster-medium,
-.marker-cluster-large {
-  background: rgba(224, 165, 38, 0.3) !important;
-}
-
-.marker-cluster-small div,
-.marker-cluster-medium div,
-.marker-cluster-large div {
-  background: rgba(224, 165, 38, 0.7) !important;
-  color: #1a1a2e !important;
-  font-weight: 700;
-}
-
-.mwoc-cluster-icon {
-  background: rgba(224, 165, 38, 0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mwoc-cluster-icon div {
-  background: rgba(224, 165, 38, 0.7);
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1a1a2e;
-  font-weight: 700;
+/* MapLibre popup styling for dark theme */
+.maplibregl-popup-content {
+  background: rgba(22, 33, 62, 0.95);
+  color: #e0e0e0;
+  border-radius: 8px;
+  padding: 8px 12px;
   font-size: 13px;
+  border: 1px solid rgba(224, 165, 38, 0.3);
+}
+
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: rgba(22, 33, 62, 0.95);
+}
+
+.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: rgba(22, 33, 62, 0.95);
 }
 
 /* =============================================================

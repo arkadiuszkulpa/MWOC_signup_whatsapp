@@ -54,6 +54,9 @@ export const handler = async (event) => {
     if (path === "/participants/postcodes" && method === "GET") {
       return await getPostcodeCounts();
     }
+    if (path === "/participants/stats" && method === "GET") {
+      return await getEventStats();
+    }
     if (path === "/participants" && method === "GET") {
       if (!isAdmin(event)) return response(401, { error: "Unauthorized" });
       return await listParticipants();
@@ -350,6 +353,34 @@ async function updateParticipant({ participantId, name, email, phone, postcode, 
     participant: result.Attributes,
     message: "Participant updated successfully",
   });
+}
+
+// ---------------------------------------------------------------------------
+// Event stats — public, no PII (only counts)
+// ---------------------------------------------------------------------------
+async function getEventStats() {
+  const result = await docClient.send(
+    new ScanCommand({
+      TableName: TABLE_NAME,
+      ProjectionExpression: "lastCheckedIn",
+      FilterExpression: "attribute_exists(lastCheckedIn)",
+    })
+  );
+
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  let totalCheckedIn2026 = 0;
+  let checkedInToday = 0;
+
+  for (const item of result.Items || []) {
+    if (item.lastCheckedIn && item.lastCheckedIn.startsWith("2026")) {
+      totalCheckedIn2026++;
+      if (item.lastCheckedIn.startsWith(today)) {
+        checkedInToday++;
+      }
+    }
+  }
+
+  return response(200, { totalCheckedIn2026, checkedInToday });
 }
 
 // ---------------------------------------------------------------------------

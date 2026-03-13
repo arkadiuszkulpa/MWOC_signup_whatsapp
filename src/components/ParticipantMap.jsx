@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import "leaflet.markercluster/dist/leaflet.markercluster.js";
-import "leaflet.markercluster/dist/MarkerCluster.css";
-import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { getPostcodeCounts } from "../services/api";
 import postcodeCoords from "../data/postcodeCoordinates.json";
 
@@ -11,8 +8,8 @@ export default function ParticipantMap({ onBack }) {
   const [postcodeCounts, setPostcodeCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -40,49 +37,91 @@ export default function ParticipantMap({ onBack }) {
 
   const totalMapped = markerData.reduce((sum, d) => sum + d.count, 0);
 
-  // Initialize map after data is loaded and container is in DOM
   useEffect(() => {
-    if (loading || error || !mapRef.current || mapInstanceRef.current) return;
+    if (loading || error || !mapContainerRef.current || mapRef.current) return;
 
-    const map = L.map(mapRef.current, {
-      center: [54.5, -2.5],
-      zoom: 6,
-      zoomControl: true,
-    });
-
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-    }).addTo(map);
-
-    const cluster = L.markerClusterGroup({
-      iconCreateFunction: (clusterObj) => {
-        const count = clusterObj.getChildCount();
-        return L.divIcon({
-          html: `<div>${count}</div>`,
-          className: "mwoc-cluster-icon",
-          iconSize: L.point(40, 40),
-        });
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: {
+        version: 8,
+        sources: {
+          "carto-dark": {
+            type: "raster",
+            tiles: ["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"],
+            tileSize: 256,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+          },
+        },
+        layers: [{ id: "carto-dark-layer", type: "raster", source: "carto-dark" }],
       },
+      center: [-2.5, 54.5],
+      zoom: 5,
     });
 
-    for (const { code, count, lat, lng } of markerData) {
-      const marker = L.circleMarker([lat, lng], {
-        radius: Math.min(8 + count * 2, 20),
-        color: "#e0a526",
-        fillColor: "#e0a526",
-        fillOpacity: 0.7,
-        weight: 1,
-      });
-      marker.bindTooltip(`<strong>${code}</strong>: ${count} participant${count !== 1 ? "s" : ""}`);
-      cluster.addLayer(marker);
-    }
+    map.addControl(new maplibregl.NavigationControl(), "top-left");
 
-    map.addLayer(cluster);
-    mapInstanceRef.current = map;
+    map.on("load", () => {
+      const geojson = {
+        type: "FeatureCollection",
+        features: markerData.map(({ code, count, lat, lng }) => ({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [lng, lat] },
+          properties: { code, count },
+        })),
+      };
+
+      map.addSource("postcodes", { type: "geojson", data: geojson });
+
+      map.addLayer({
+        id: "postcode-circles",
+        type: "circle",
+        source: "postcodes",
+        paint: {
+          "circle-radius": ["min", ["+", 6, ["*", ["get", "count"], 2]], 20],
+          "circle-color": "#e0a526",
+          "circle-opacity": 0.7,
+          "circle-stroke-width": 1,
+          "circle-stroke-color": "#e0a526",
+        },
+      });
+
+      map.addLayer({
+        id: "postcode-labels",
+        type: "symbol",
+        source: "postcodes",
+        layout: {
+          "text-field": ["to-string", ["get", "count"]],
+          "text-size": 11,
+          "text-allow-overlap": true,
+        },
+        paint: {
+          "text-color": "#1a1a2e",
+          "text-halo-color": "#e0a526",
+          "text-halo-width": 0.5,
+        },
+      });
+
+      map.on("click", "postcode-circles", (e) => {
+        const props = e.features[0].properties;
+        new maplibregl.Popup({ closeButton: false, offset: 10 })
+          .setLngLat(e.lngLat)
+          .setHTML(`<strong>${props.code}</strong>: ${props.count} participant${props.count !== 1 ? "s" : ""}`)
+          .addTo(map);
+      });
+
+      map.on("mouseenter", "postcode-circles", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "postcode-circles", () => {
+        map.getCanvas().style.cursor = "";
+      });
+    });
+
+    mapRef.current = map;
 
     return () => {
       map.remove();
-      mapInstanceRef.current = null;
+      mapRef.current = null;
     };
   }, [loading, error, markerData]);
 
@@ -109,9 +148,7 @@ export default function ParticipantMap({ onBack }) {
           {totalMapped} participant{totalMapped !== 1 ? "s" : ""} mapped from {markerData.length} area{markerData.length !== 1 ? "s" : ""}
         </div>
       </div>
-      <div className="map-container">
-        <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
-      </div>
+      <div ref={mapContainerRef} className="map-container" />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import SignupForm from "./components/SignupForm";
 import UpdateDetailsForm from "./components/UpdateDetailsForm";
 import DisclaimerScreen from "./components/DisclaimerScreen";
 import SuccessScreen from "./components/SuccessScreen";
+import EventStats from "./components/EventStats";
 import { searchParticipant, createParticipant, updateParticipant, checkinParticipant } from "./services/api";
 import "./styles/App.css";
 
@@ -135,6 +136,7 @@ export default function App() {
         <div className="cross-icon">{"\u271D"}</div>
         <h1>Men's Way of the Cross</h1>
         <p>Participant Check-In</p>
+        <EventStats />
         <button
           className="map-icon-btn"
           onClick={() => setView(VIEWS.MAP)}
