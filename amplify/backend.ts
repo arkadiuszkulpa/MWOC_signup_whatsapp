@@ -35,6 +35,9 @@ participantsTable.addGlobalSecondaryIndex({
 // ---------------------------------------------------------------------------
 participantsTable.grantReadWriteData(backend.participantsFunction.resources.lambda);
 backend.participantsFunction.addEnvironment("PARTICIPANTS_TABLE", participantsTable.tableName);
+// Read ADMIN_API_KEY from environment; set via .env locally or Amplify console for prod
+declare const process: { env: Record<string, string | undefined> };
+backend.participantsFunction.addEnvironment("ADMIN_API_KEY", process.env.ADMIN_API_KEY || "change-me-in-amplify-env");
 
 // ---------------------------------------------------------------------------
 // REST API Gateway
@@ -61,6 +64,14 @@ const participantsIntegration = new apigateway.LambdaIntegration(
 participantsResource.addMethod("GET", participantsIntegration);
 participantsResource.addMethod("POST", participantsIntegration);
 participantsResource.addMethod("PUT", participantsIntegration);
+
+// /participants/postcodes  (public — returns aggregated counts only, no PII)
+const postcodesResource = participantsResource.addResource("postcodes");
+postcodesResource.addMethod("GET", participantsIntegration);
+
+// /participants/stats  (public — returns check-in counts only, no PII)
+const statsResource = participantsResource.addResource("stats");
+statsResource.addMethod("GET", participantsIntegration);
 
 // /participants/search
 const searchResource = participantsResource.addResource("search");

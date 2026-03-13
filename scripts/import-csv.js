@@ -15,9 +15,10 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const apiUrl = process.argv[2];
-if (!apiUrl) {
-  console.error("Usage: node scripts/import-csv.js <API_URL>");
-  console.error("Example: node scripts/import-csv.js https://abc123.execute-api.eu-west-2.amazonaws.com/prod");
+const apiKey = process.env.ADMIN_API_KEY;
+if (!apiUrl || !apiKey) {
+  console.error("Usage: ADMIN_API_KEY=<key> node scripts/import-csv.js <API_URL>");
+  console.error("Example: ADMIN_API_KEY=secret node scripts/import-csv.js https://abc123.execute-api.eu-west-2.amazonaws.com/prod");
   process.exit(1);
 }
 
@@ -28,7 +29,7 @@ console.log(`Importing ${data.participants.length} participants to ${apiUrl}...`
 
 const response = await fetch(`${apiUrl}/participants/import`, {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json", "x-api-key": apiKey },
   body: JSON.stringify(data),
 });
 

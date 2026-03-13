@@ -45,6 +45,44 @@ body {
   color: #a0a0b0;
 }
 
+/* Event stats counter — compact pills */
+.event-stats {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.event-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 6px 14px;
+  min-width: 64px;
+}
+
+.event-stat-highlight {
+  background: rgba(224, 165, 38, 0.1);
+  border-color: rgba(224, 165, 38, 0.25);
+}
+
+.event-stat-number {
+  color: #e0a526;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.event-stat-label {
+  font-size: 11px;
+  color: #707080;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Cross icon */
 .cross-icon {
   font-size: 48px;
@@ -349,4 +387,117 @@ body {
     font-size: 16px;
     padding: 14px;
   }
+}
+
+/* =============================================================
+   Map view
+   ============================================================= */
+
+/* Footer badges — QR code and map link */
+.footer-badges {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+}
+
+.footer-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(22, 33, 62, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.footer-badge:hover {
+  border-color: rgba(224, 165, 38, 0.4);
+}
+
+.footer-badge-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.footer-badge-label {
+  font-size: 12px;
+  color: #a0a0b0;
+  line-height: 1.3;
+}
+
+/* On small phones they're already on their phone */
+@media (max-width: 480px) {
+  .footer-badges {
+    display: none;
+  }
+}
+
+.map-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease;
+}
+
+.map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.map-back-btn {
+  width: auto;
+  padding: 10px 20px !important;
+  font-size: 14px !important;
+}
+
+.map-stats {
+  font-size: 14px;
+  color: #a0a0b0;
+}
+
+.map-container {
+  flex: 1;
+  height: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* MapLibre popup styling for dark theme */
+.maplibregl-popup-content {
+  background: rgba(22, 33, 62, 0.95);
+  color: #e0e0e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid rgba(224, 165, 38, 0.3);
+}
+
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: rgba(22, 33, 62, 0.95);
+}
+
+.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: rgba(22, 33, 62, 0.95);
+}
+
+/* QR code image in footer badge */
+.qr-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  background: #fff;
+  padding: 2px;
 }

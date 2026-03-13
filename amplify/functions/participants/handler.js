@@ -13,6 +13,13 @@ const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
 const TABLE_NAME = process.env.PARTICIPANTS_TABLE || "mwoc-participants";
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
+
+function isAdmin(event) {
+  if (!ADMIN_API_KEY) return false;
+  const provided = (event.headers || {})["x-api-key"] || (event.headers || {})["X-Api-Key"] || "";
+  return provided === ADMIN_API_KEY;
+}
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -44,10 +51,18 @@ export const handler = async (event) => {
     if (path === "/participants" && method === "PUT") {
       return await updateParticipant(JSON.parse(event.body));
     }
+    if (path === "/participants/postcodes" && method === "GET") {
+      return await getPostcodeCounts();
+    }
+    if (path === "/participants/stats" && method === "GET") {
+      return await getEventStats();
+    }
     if (path === "/participants" && method === "GET") {
+      if (!isAdmin(event)) return response(401, { error: "Unauthorized" });
       return await listParticipants();
     }
     if (path === "/participants/import" && method === "POST") {
+      if (!isAdmin(event)) return response(401, { error: "Unauthorized" });
       return await bulkImport(JSON.parse(event.body));
     }
 
@@ -338,6 +353,57 @@ async function updateParticipant({ participantId, name, email, phone, postcode, 
     participant: result.Attributes,
     message: "Participant updated successfully",
   });
+}
+
+// ---------------------------------------------------------------------------
+// Event stats — public, no PII (only counts)
+// ---------------------------------------------------------------------------
+async function getEventStats() {
+  const result = await docClient.send(
+    new ScanCommand({
+      TableName: TABLE_NAME,
+      ProjectionExpression: "lastCheckedIn",
+    })
+  );
+
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  let totalParticipants = 0;
+  let totalCheckedIn2026 = 0;
+  let checkedInToday = 0;
+
+  for (const item of result.Items || []) {
+    totalParticipants++;
+    if (item.lastCheckedIn && item.lastCheckedIn.startsWith("2026")) {
+      totalCheckedIn2026++;
+      if (item.lastCheckedIn.startsWith(today)) {
+        checkedInToday++;
+      }
+    }
+  }
+
+  return response(200, { totalParticipants, totalCheckedIn2026, checkedInToday });
+}
+
+// ---------------------------------------------------------------------------
+// Aggregated postcode counts — public, no PII
+// ---------------------------------------------------------------------------
+async function getPostcodeCounts() {
+  const result = await docClient.send(
+    new ScanCommand({
+      TableName: TABLE_NAME,
+      ProjectionExpression: "postcode",
+      FilterExpression: "attribute_exists(postcode) AND postcode <> :empty",
+      ExpressionAttributeValues: { ":empty": "" },
+    })
+  );
+
+  const counts = {};
+  for (const item of result.Items || []) {
+    const code = item.postcode.trim().toUpperCase();
+    if (code) counts[code] = (counts[code] || 0) + 1;
+  }
+
+  return response(200, { postcodes: counts, total: Object.values(counts).reduce((a, b) => a + b, 0) });
 }
 
 // ---------------------------------------------------------------------------

@@ -15,6 +15,7 @@ const fs = require("fs");
 const path = require("path");
 
 const API_URL = process.env.API_URL || "http://localhost:3001";
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
 
 async function main() {
   const csvPath = process.argv[2];
@@ -58,7 +59,7 @@ async function main() {
 
   const response = await fetch(`${API_URL}/participants/import`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-api-key": ADMIN_API_KEY },
     body: JSON.stringify({ participants, source: "mailchimp" }),
   });
 

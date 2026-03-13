@@ -1,10 +1,12 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, lazy, Suspense } from "react";
+const ParticipantMap = lazy(() => import("./components/ParticipantMap"));
 import SearchForm from "./components/SearchForm";
 import SearchResults from "./components/SearchResults";
 import SignupForm from "./components/SignupForm";
 import UpdateDetailsForm from "./components/UpdateDetailsForm";
 import DisclaimerScreen from "./components/DisclaimerScreen";
 import SuccessScreen from "./components/SuccessScreen";
+import EventStats from "./components/EventStats";
 import { searchParticipant, createParticipant, updateParticipant, checkinParticipant } from "./services/api";
 import "./styles/App.css";
 
@@ -17,6 +19,7 @@ const VIEWS = {
   EDIT_ALL: "editAll",
   DISCLAIMER: "disclaimer",
   SUCCESS: "success",
+  MAP: "map",
 };
 
 export default function App() {
@@ -133,6 +136,7 @@ export default function App() {
         <div className="cross-icon">{"\u271D"}</div>
         <h1>Men's Way of the Cross</h1>
         <p>Participant Check-In</p>
+        <EventStats />
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -199,13 +203,29 @@ export default function App() {
         />
       )}
 
-      {view !== VIEWS.SUCCESS && (
+      {view === VIEWS.MAP && (
+        <Suspense fallback={<div className="loading"><span className="spinner" /> Loading map...</div>}>
+          <ParticipantMap onBack={handleReset} />
+        </Suspense>
+      )}
+
+      {view !== VIEWS.SUCCESS && view !== VIEWS.MAP && (
         <div className="reset-area">
           <button className="reset-link" onClick={handleReset}>
             Start Over
           </button>
         </div>
       )}
+      <div className="footer-badges">
+        <button className="footer-badge" onClick={() => setView(VIEWS.MAP)}>
+          <span className="footer-badge-icon">{"\uD83D\uDDFA"}</span>
+          <span className="footer-badge-label">See event reach</span>
+        </button>
+        <div className="footer-badge">
+          <img src="/qr-code.png" alt="Scan to sign up on your phone" className="qr-img" />
+          <span className="footer-badge-label">Scan to use<br />your phone</span>
+        </div>
+      </div>
     </div>
   );
 }
