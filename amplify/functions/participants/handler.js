@@ -400,10 +400,8 @@ async function getPostcodeCounts() {
   const counts = {};
   for (const item of result.Items || []) {
     const raw = item.postcode.trim().toUpperCase();
-    // Extract outward code: part before the space, or drop last 3 chars (UK format)
-    const outward = raw.includes(" ")
-      ? raw.split(" ")[0]
-      : raw.length > 3 ? raw.slice(0, -3) : raw;
+    // Extract outward code: part before the space; if no space, use as-is
+    const outward = raw.includes(" ") ? raw.split(" ")[0] : raw;
     if (outward) counts[outward] = (counts[outward] || 0) + 1;
   }
 
