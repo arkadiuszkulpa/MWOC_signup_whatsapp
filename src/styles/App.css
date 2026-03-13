@@ -30,7 +30,6 @@ body {
 .header {
   text-align: center;
   margin-bottom: 32px;
-  position: relative;
 }
 
 .header h1 {
@@ -46,24 +45,42 @@ body {
   color: #a0a0b0;
 }
 
-/* Event stats counter */
+/* Event stats counter — compact pills */
 .event-stats {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
   justify-content: center;
-  gap: 20px;
-  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .event-stat {
-  font-size: 14px;
-  color: #a0a0b0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 6px 14px;
+  min-width: 64px;
+}
+
+.event-stat-highlight {
+  background: rgba(224, 165, 38, 0.1);
+  border-color: rgba(224, 165, 38, 0.25);
 }
 
 .event-stat-number {
   color: #e0a526;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.event-stat-label {
+  font-size: 11px;
+  color: #707080;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Cross icon */
@@ -376,27 +393,53 @@ body {
    Map view
    ============================================================= */
 
-.map-icon-btn {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
+/* Footer badges — QR code and map link */
+.footer-badges {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #a0a0b0;
-  font-size: 18px;
-  position: absolute;
-  top: 0;
-  right: 0;
-  transition: all 0.2s;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
 }
 
-.map-icon-btn:hover {
-  border-color: #e0a526;
-  color: #e0a526;
+.footer-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(22, 33, 62, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.footer-badge:hover {
+  border-color: rgba(224, 165, 38, 0.4);
+}
+
+.footer-badge-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.footer-badge-label {
+  font-size: 12px;
+  color: #a0a0b0;
+  line-height: 1.3;
+}
+
+/* On small phones they're already on their phone */
+@media (max-width: 480px) {
+  .footer-badges {
+    display: none;
+  }
 }
 
 .map-view {
@@ -450,47 +493,11 @@ body {
   border-bottom-color: rgba(22, 33, 62, 0.95);
 }
 
-/* =============================================================
-   QR code badge — fixed bottom-right on all pages
-   ============================================================= */
-
-.qr-badge {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(22, 33, 62, 0.85);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 8px 12px 8px 8px;
-  z-index: 1000;
-  transition: opacity 0.2s;
-}
-
-.qr-badge:hover {
-  opacity: 0.7;
-}
-
+/* QR code image in footer badge */
 .qr-img {
-  width: 64px;
-  height: 64px;
+  width: 48px;
+  height: 48px;
   border-radius: 6px;
   background: #fff;
   padding: 2px;
-}
-
-.qr-label {
-  font-size: 12px;
-  color: #a0a0b0;
-  line-height: 1.3;
-}
-
-/* On small phones the QR is less useful (they're already on their phone) */
-@media (max-width: 480px) {
-  .qr-badge {
-    display: none;
-  }
 }

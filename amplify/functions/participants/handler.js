@@ -363,15 +363,16 @@ async function getEventStats() {
     new ScanCommand({
       TableName: TABLE_NAME,
       ProjectionExpression: "lastCheckedIn",
-      FilterExpression: "attribute_exists(lastCheckedIn)",
     })
   );
 
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  let totalParticipants = 0;
   let totalCheckedIn2026 = 0;
   let checkedInToday = 0;
 
   for (const item of result.Items || []) {
+    totalParticipants++;
     if (item.lastCheckedIn && item.lastCheckedIn.startsWith("2026")) {
       totalCheckedIn2026++;
       if (item.lastCheckedIn.startsWith(today)) {
@@ -380,7 +381,7 @@ async function getEventStats() {
     }
   }
 
-  return response(200, { totalCheckedIn2026, checkedInToday });
+  return response(200, { totalParticipants, totalCheckedIn2026, checkedInToday });
 }
 
 // ---------------------------------------------------------------------------

@@ -18,21 +18,27 @@ export default function EventStats() {
     })();
   }, []);
 
-  if (!stats || stats.totalCheckedIn2026 === 0) return null;
+  if (!stats) return null;
 
   const today = new Date().toISOString().slice(0, 10);
   const isEventDay = today === EVENT_DATE;
 
   return (
     <div className="event-stats">
-      <div className="event-stat">
-        <span className="event-stat-number">{stats.totalCheckedIn2026}</span> signed up for 2026
-      </div>
       {isEventDay && (
-        <div className="event-stat">
-          <span className="event-stat-number">{stats.checkedInToday}</span> / {stats.totalCheckedIn2026} checked in today
+        <div className="event-stat event-stat-highlight">
+          <span className="event-stat-number">{stats.checkedInToday}</span>
+          <span className="event-stat-label">today</span>
         </div>
       )}
+      <div className="event-stat">
+        <span className="event-stat-number">{stats.totalCheckedIn2026}</span>
+        <span className="event-stat-label">confirmed</span>
+      </div>
+      <div className="event-stat">
+        <span className="event-stat-number">{stats.totalParticipants}</span>
+        <span className="event-stat-label">registered</span>
+      </div>
     </div>
   );
 }

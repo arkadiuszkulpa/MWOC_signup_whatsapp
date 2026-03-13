@@ -137,14 +137,6 @@ export default function App() {
         <h1>Men's Way of the Cross</h1>
         <p>Participant Check-In</p>
         <EventStats />
-        <button
-          className="map-icon-btn"
-          onClick={() => setView(VIEWS.MAP)}
-          title="Participant Map"
-          aria-label="View participant map"
-        >
-          {"\uD83D\uDDFA"}
-        </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -224,9 +216,15 @@ export default function App() {
           </button>
         </div>
       )}
-      <div className="qr-badge">
-        <img src="/qr-code.png" alt="Scan to sign up on your phone" className="qr-img" />
-        <span className="qr-label">Scan to sign up<br />on your phone</span>
+      <div className="footer-badges">
+        <button className="footer-badge" onClick={() => setView(VIEWS.MAP)}>
+          <span className="footer-badge-icon">{"\uD83D\uDDFA"}</span>
+          <span className="footer-badge-label">See event reach</span>
+        </button>
+        <div className="footer-badge">
+          <img src="/qr-code.png" alt="Scan to sign up on your phone" className="qr-img" />
+          <span className="footer-badge-label">Scan to use<br />your phone</span>
+        </div>
       </div>
     </div>
   );
