@@ -1,4 +1,4 @@
-import React, { useState, useCallback, lazy, Suspense } from "react";
+import React, { useState, useCallback, useEffect, lazy, Suspense } from "react";
 const ParticipantMap = lazy(() => import("./components/ParticipantMap"));
 import SearchForm from "./components/SearchForm";
 import SearchResults from "./components/SearchResults";
@@ -30,6 +30,26 @@ export default function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [isNewSignup, setIsNewSignup] = useState(false);
+  const [statsKey, setStatsKey] = useState(0);
+
+  // Prevent device sleep (kiosk/tablet mode)
+  useEffect(() => {
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        wakeLock = await navigator.wakeLock.request("screen");
+      } catch { /* not supported or denied */ }
+    };
+    requestWakeLock();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") requestWakeLock();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (wakeLock) wakeLock.release();
+    };
+  }, []);
 
   const handleSearch = async (query) => {
     setError(null);
@@ -99,6 +119,7 @@ export default function App() {
         setIsNewSignup(true);
       }
       setView(VIEWS.DISCLAIMER);
+      setStatsKey(k => k + 1);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -114,6 +135,7 @@ export default function App() {
       const { data } = await checkinParticipant(selectedParticipant.participantId);
       setSelectedParticipant(data.participant);
       setView(VIEWS.SUCCESS);
+      setStatsKey(k => k + 1);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -134,9 +156,9 @@ export default function App() {
     <div className="app">
       <div className="header">
         <div className="cross-icon">{"\u271D"}</div>
-        <h1>Men's Way of the Cross</h1>
+        <h1>Men's Way of the Cross, Eastbourne</h1>
         <p>Participant Check-In</p>
-        <EventStats />
+        <EventStats refreshKey={statsKey} />
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -225,6 +247,10 @@ export default function App() {
           <img src="/qr-code.png" alt="Scan to sign up on your phone" className="qr-img" />
           <span className="footer-badge-label">Scan to use<br />your phone</span>
         </div>
+        <a href="https://menswayofthecross.co.uk" target="_blank" rel="noopener noreferrer" className="footer-badge">
+          <span className="footer-badge-icon">{"\u2720"}</span>
+          <span className="footer-badge-label">Our website</span>
+        </a>
       </div>
     </div>
   );
